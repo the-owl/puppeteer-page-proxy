@@ -4,7 +4,7 @@ const {setHeaders, setAgent} = require("../lib/options");
 const type = require("../util/types");
 
 // Responsible for applying proxy
-const requestHandler = async (request, proxy, overrides = {}) => {
+const requestHandler = async (request, proxy, overrides = {}, { abortOnErrors, timeout }) => {
     // Reject non http(s) URI schemes
     if (!request.url().startsWith("http") && !request.url().startsWith("https")) {
         request.continue(); return;
@@ -21,7 +21,8 @@ const requestHandler = async (request, proxy, overrides = {}) => {
         maxRedirects: 15,
         throwHttpErrors: false,
         ignoreInvalidCookies: true,
-        followRedirect: false
+        followRedirect: false,
+        timeout,
     };
     try {
         const response = await got(overrides.url || request.url(), options);
@@ -38,7 +39,11 @@ const requestHandler = async (request, proxy, overrides = {}) => {
             body: response.body
         });
     } catch (error) {
-        await request.abort();
+        if (abortOnErrors) {
+            await request.abort();
+        } else {
+            throw error;
+        }
     }
 };
 
@@ -58,7 +63,7 @@ const removeRequestListener = (page, listenerName) => {
 };
 
 // Calls this if request object passed
-const proxyPerRequest = async (request, data) => {
+const proxyPerRequest = async (request, data, options) => {
     let proxy, overrides;
     // Separate proxy and overrides
     if (type(data) === "object") {
@@ -69,29 +74,32 @@ const proxyPerRequest = async (request, data) => {
         }
     } else {proxy = data}
     // Skip request if proxy omitted
-    if (proxy) {await requestHandler(request, proxy, overrides)}
+    if (proxy) {await requestHandler(request, proxy, overrides, options)}
     else {request.continue(overrides)}
 };
 
 // Calls this if page object passed
-const proxyPerPage = async (page, proxy) => {
+const proxyPerPage = async (page, proxy, options) => {
     await page.setRequestInterception(true);
     const listener = "$ppp_request_listener";
     removeRequestListener(page, listener);
     const f = {[listener]: async (request) => {
-        await requestHandler(request, proxy);
+        await requestHandler(request, proxy, {}, options);
     }};
     if (proxy) {page.on("request", f[listener])}
     else {await page.setRequestInterception(false)}
 };
 
 // Main function
-const useProxy = async (target, data) => {
+const useProxy = async (target, data, options = {
+    abortOnErrors: true,
+    timeout: null,
+}) => {
     const targetType = target.constructor.name;
     if (targetType === "HTTPRequest") {
-        await proxyPerRequest(target, data);
+        await proxyPerRequest(target, data, options);
     } else if (targetType === "Page") {
-        await proxyPerPage(target, data);
+        await proxyPerPage(target, data, options);
     }
 };
 
