@@ -11,7 +11,14 @@ export = puppeteer_page_proxy;
  * @param page 'Page' or 'Request' object to set a proxy for.
  * @param proxy Proxy to use in the current page. Must begin with a protocol e.g. **http://**, **https://**, **socks://**.
  */
-declare function puppeteer_page_proxy(page: object, proxy: string | object, abortOnErrors?: boolean): Promise<any>;
+
+export interface ProxyOptions {
+	abortOnErrors?: boolean;
+	additionalHeaders?: { [name: string]: string };
+	timeout?: number;
+}
+
+declare function puppeteer_page_proxy(page: object, proxy: string | object, options?: ProxyOptions): Promise<any>;
 declare namespace puppeteer_page_proxy {
 /**
  * **Request data from a lookupservice.**

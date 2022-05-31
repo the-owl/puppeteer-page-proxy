@@ -3,12 +3,13 @@ const { SocksProxyAgent } = require("socks-proxy-agent");
 
 // Set some extra headers because Puppeteer doesn't capture all request headers
 // Related: https://github.com/puppeteer/puppeteer/issues/5364
-const setHeaders = (request) => {
+const setHeaders = (request, additionalHeaders = {}) => {
     const headers = {
         ...request.headers(),
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "accept-encoding": "gzip, deflate, br",
-        "host": new URL(request.url()).hostname
+        "host": new URL(request.url()).hostname,
+        ...additionalHeaders,
     }
     if (request.isNavigationRequest()) {
         headers["sec-fetch-mode"] = "navigate";
@@ -30,12 +31,8 @@ const setAgent = (proxy) => {
         };
     }
     return {
-        http: new agents.HttpProxyAgent({
-            proxy
-        }),
-        https: new agents.HttpsProxyAgent({
-            proxy
-        })
+        http: new agents.HttpProxyAgent({ proxy }),
+        https: new agents.HttpsProxyAgent({ proxy }),
     };
 };
 

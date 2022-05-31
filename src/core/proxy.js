@@ -4,7 +4,11 @@ const {setHeaders, setAgent} = require("../lib/options");
 const type = require("../util/types");
 
 // Responsible for applying proxy
-const requestHandler = async (request, proxy, overrides = {}, { abortOnErrors, timeout }) => {
+const requestHandler = async (request, proxy, overrides = {}, {
+    abortOnErrors,
+    additionalHeaders,
+    timeout,
+}) => {
     // Reject non http(s) URI schemes
     if (!request.url().startsWith("http") && !request.url().startsWith("https")) {
         request.continue(); return;
@@ -15,7 +19,7 @@ const requestHandler = async (request, proxy, overrides = {}, { abortOnErrors, t
         cookieJar: await cookieHandler.getCookies(),
         method: overrides.method || request.method(),
         body: overrides.postData || request.postData(),
-        headers: overrides.headers || setHeaders(request),
+        headers: overrides.headers || setHeaders(request, additionalHeaders),
         agent: setAgent(proxy),
         responseType: "buffer",
         maxRedirects: 15,
@@ -24,8 +28,10 @@ const requestHandler = async (request, proxy, overrides = {}, { abortOnErrors, t
         followRedirect: false,
         timeout,
     };
+    console.log(abortOnErrors, additionalHeaders, timeout);
     try {
         const response = await got(overrides.url || request.url(), options);
+        console.log(response);
         // Set cookies manually because "set-cookie" doesn't set all cookies (?)
         // Perhaps related to https://github.com/puppeteer/puppeteer/issues/5364
         const setCookieHeader = response.headers["set-cookie"];
@@ -39,6 +45,7 @@ const requestHandler = async (request, proxy, overrides = {}, { abortOnErrors, t
             body: response.body
         });
     } catch (error) {
+        console.log('err', error);
         if (abortOnErrors) {
             await request.abort();
         } else {
@@ -93,6 +100,7 @@ const proxyPerPage = async (page, proxy, options) => {
 // Main function
 const useProxy = async (target, data, options = {
     abortOnErrors: true,
+    additionalHeaders: {},
     timeout: null,
 }) => {
     const targetType = target.constructor.name;
