@@ -28,10 +28,8 @@ const requestHandler = async (request, proxy, overrides = {}, {
         followRedirect: false,
         timeout,
     };
-    console.log(abortOnErrors, additionalHeaders, timeout);
     try {
         const response = await got(overrides.url || request.url(), options);
-        console.log(response);
         // Set cookies manually because "set-cookie" doesn't set all cookies (?)
         // Perhaps related to https://github.com/puppeteer/puppeteer/issues/5364
         const setCookieHeader = response.headers["set-cookie"];
@@ -45,7 +43,6 @@ const requestHandler = async (request, proxy, overrides = {}, {
             body: response.body
         });
     } catch (error) {
-        console.log('err', error);
         if (abortOnErrors) {
             await request.abort();
         } else {
