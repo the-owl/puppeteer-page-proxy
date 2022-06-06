@@ -22,7 +22,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "got": "^11.5.1",
+    "got": "^12.1.0",
     "got-scraping": "^3.2.8",
     "http-proxy-agent": "^4.0.1",
     "https-proxy-agent": "^5.0.0",

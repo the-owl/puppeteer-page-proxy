@@ -1,4 +1,3 @@
-const got = require("got");
 const CookieHandler = require("../lib/cookies");
 const {setHeaders, setAgent} = require("../lib/options");
 const type = require("../util/types");
@@ -11,6 +10,7 @@ const requestHandler = async (request, proxy, overrides = {}, {
     gotOptions,
     timeout,
 }) => {
+    const { got } = await import('got');
     // Reject non http(s) URI schemes
     if (!request.url().startsWith("http") && !request.url().startsWith("https")) {
         request.continue(); return;
@@ -28,7 +28,9 @@ const requestHandler = async (request, proxy, overrides = {}, {
         throwHttpErrors: false,
         ignoreInvalidCookies: true,
         followRedirect: false,
-        timeout,
+        timeout: timeout ? {
+            request: timeout
+        } : null,
         ...(gotOptions || {}),
     };
     try {
