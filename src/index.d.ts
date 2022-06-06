@@ -1,3 +1,5 @@
+import { Agent } from 'http';
+
 export = puppeteer_page_proxy;
 /**
  * **Set a proxy to use in a given page or request.**
@@ -12,9 +14,11 @@ export = puppeteer_page_proxy;
  * @param proxy Proxy to use in the current page. Must begin with a protocol e.g. **http://**, **https://**, **socks://**.
  */
 
-export interface ProxyOptions {
+declare interface ProxyOptions {
 	abortOnErrors?: boolean;
 	additionalHeaders?: { [name: string]: string };
+	getAgent?: (proxy: string) => Agent;
+	gotOptions?: any;
 	timeout?: number;
 }
 

@@ -7,6 +7,8 @@ const type = require("../util/types");
 const requestHandler = async (request, proxy, overrides = {}, {
     abortOnErrors,
     additionalHeaders,
+    getAgent,
+    gotOptions,
     timeout,
 }) => {
     // Reject non http(s) URI schemes
@@ -20,13 +22,14 @@ const requestHandler = async (request, proxy, overrides = {}, {
         method: overrides.method || request.method(),
         body: overrides.postData || request.postData(),
         headers: overrides.headers || setHeaders(request, additionalHeaders),
-        agent: setAgent(proxy),
+        agent: getAgent ? getAgent(proxy) : setAgent(proxy),
         responseType: "buffer",
         maxRedirects: 15,
         throwHttpErrors: false,
         ignoreInvalidCookies: true,
         followRedirect: false,
         timeout,
+        ...(gotOptions || {}),
     };
     try {
         const response = await got(overrides.url || request.url(), options);
@@ -36,6 +39,10 @@ const requestHandler = async (request, proxy, overrides = {}, {
         if (setCookieHeader) {
             await cookieHandler.setCookies(setCookieHeader);
             response.headers["set-cookie"] = undefined;
+        }
+        // correct http2 support
+        if (response.headers[':status']) {
+            delete response.headers[':status'];
         }
         await request.respond({
             status: response.statusCode,
@@ -98,6 +105,8 @@ const proxyPerPage = async (page, proxy, options) => {
 const useProxy = async (target, data, options = {
     abortOnErrors: true,
     additionalHeaders: {},
+    getAgent: undefined,
+    gotOptions: {},
     timeout: null,
 }) => {
     const targetType = target.constructor.name;
