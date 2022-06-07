@@ -9,6 +9,7 @@ const requestHandler = async (request, proxy, overrides = {}, {
     getAgent,
     gotOptions,
     timeout,
+    validateResponse,
 }) => {
     const { got } = await import('got');
     // Reject non http(s) URI schemes
@@ -35,6 +36,9 @@ const requestHandler = async (request, proxy, overrides = {}, {
     };
     try {
         const response = await got(overrides.url || request.url(), options);
+        if (validateResponse) {
+            await validateResponse(response);
+        }
         // Set cookies manually because "set-cookie" doesn't set all cookies (?)
         // Perhaps related to https://github.com/puppeteer/puppeteer/issues/5364
         const setCookieHeader = response.headers["set-cookie"];
@@ -110,6 +114,7 @@ const useProxy = async (target, data, options = {
     getAgent: undefined,
     gotOptions: {},
     timeout: null,
+    validateResponse: null,
 }) => {
     const targetType = target.constructor.name;
     if (targetType === "HTTPRequest") {

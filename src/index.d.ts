@@ -1,4 +1,5 @@
 import { Agent } from 'http';
+import { Response } from 'got';
 
 export = puppeteer_page_proxy;
 /**
@@ -20,6 +21,7 @@ declare interface ProxyOptions {
 	getAgent?: (proxy: string) => Agent;
 	gotOptions?: any;
 	timeout?: number;
+	validateResponse?: (response: Response) => void | Promise<void>;
 }
 
 declare function puppeteer_page_proxy(page: object, proxy: string | object, options?: ProxyOptions): Promise<any>;
